@@ -53,71 +53,73 @@ def _rate_eval_block(iblock, start, stop, nstates, data_input, name, mcbs_alpha,
 
 # The old w_kinetics
 class DKinetics(WESTKineticsBase, WKinetics):
+    '''
+    Calculate state-to-state rates and transition event durations by tracing
+    trajectories.
+
+    A bin assignment file (usually "assign.h5") including trajectory labeling
+    is required (see "w_assign --help" for information on generating this file).
+
+    This subcommand for w_direct is used as input for all other w_direct
+    subcommands, which will convert the flux data in the output file into
+    average rates/fluxes/populations with confidence intervals.
+
+    -----------------------------------------------------------------------------
+    Output format
+    -----------------------------------------------------------------------------
+
+    The output file (-o/--output, by default "direct.h5") contains the
+    following datasets:
+
+    ``/conditional_fluxes`` [iteration][state][state]
+        *(Floating-point)* Macrostate-to-macrostate fluxes. These are **not**
+        normalized by the population of the initial macrostate.
+
+    ``/conditional_arrivals`` [iteration][stateA][stateB]
+        *(Integer)* Number of trajectories arriving at state *stateB* in a given
+        iteration, given that they departed from *stateA*.
+
+    ``/total_fluxes`` [iteration][state]
+        *(Floating-point)* Total flux into a given macrostate.
+
+    ``/arrivals`` [iteration][state]
+        *(Integer)* Number of trajectories arriving at a given state in a given
+        iteration, regardless of where they originated.
+
+    ``/duration_count`` [iteration]
+        *(Integer)* The number of event durations recorded in each iteration.
+
+    ``/durations`` [iteration][event duration]
+        *(Structured -- see below)*  Event durations for transition events ending
+        during a given iteration. These are stored as follows:
+
+        istate
+            *(Integer)* Initial state of transition event.
+        fstate
+            *(Integer)* Final state of transition event.
+        duration
+            *(Floating-point)* Duration of transition, in units of tau.
+        weight
+            *(Floating-point)* Weight of trajectory at end of transition, **not**
+            normalized by initial state population.
+
+    Because state-to-state fluxes stored in this file are not normalized by
+    initial macrostate population, they cannot be used as rates without further
+    processing. The ``w_direct kinetics`` command is used to perform this normalization
+    while taking statistical fluctuation and correlation into account. See
+    ``w_direct kinetics --help`` for more information.  Target fluxes (total flux
+    into a given state) require no such normalization.
+
+    -----------------------------------------------------------------------------
+    Command-line options
+    -----------------------------------------------------------------------------
+    '''
+    
     subcommand = 'init'
     default_kinetics_file = 'direct.h5'
     default_output_file = 'direct.h5'
     help_text = 'calculate state-to-state kinetics by tracing trajectories'
-    description = '''\
-Calculate state-to-state rates and transition event durations by tracing
-trajectories.
-
-A bin assignment file (usually "assign.h5") including trajectory labeling
-is required (see "w_assign --help" for information on generating this file).
-
-This subcommand for w_direct is used as input for all other w_direct
-subcommands, which will convert the flux data in the output file into
-average rates/fluxes/populations with confidence intervals.
-
------------------------------------------------------------------------------
-Output format
------------------------------------------------------------------------------
-
-The output file (-o/--output, by default "direct.h5") contains the
-following datasets:
-
-  ``/conditional_fluxes`` [iteration][state][state]
-    *(Floating-point)* Macrostate-to-macrostate fluxes. These are **not**
-    normalized by the population of the initial macrostate.
-
-  ``/conditional_arrivals`` [iteration][stateA][stateB]
-    *(Integer)* Number of trajectories arriving at state *stateB* in a given
-    iteration, given that they departed from *stateA*.
-
-  ``/total_fluxes`` [iteration][state]
-    *(Floating-point)* Total flux into a given macrostate.
-
-  ``/arrivals`` [iteration][state]
-    *(Integer)* Number of trajectories arriving at a given state in a given
-    iteration, regardless of where they originated.
-
-  ``/duration_count`` [iteration]
-    *(Integer)* The number of event durations recorded in each iteration.
-
-  ``/durations`` [iteration][event duration]
-    *(Structured -- see below)*  Event durations for transition events ending
-    during a given iteration. These are stored as follows:
-
-      istate
-        *(Integer)* Initial state of transition event.
-      fstate
-        *(Integer)* Final state of transition event.
-      duration
-        *(Floating-point)* Duration of transition, in units of tau.
-      weight
-        *(Floating-point)* Weight of trajectory at end of transition, **not**
-        normalized by initial state population.
-
-Because state-to-state fluxes stored in this file are not normalized by
-initial macrostate population, they cannot be used as rates without further
-processing. The ``w_direct kinetics`` command is used to perform this normalization
-while taking statistical fluctuation and correlation into account. See
-``w_direct kinetics --help`` for more information.  Target fluxes (total flux
-into a given state) require no such normalization.
-
------------------------------------------------------------------------------
-Command-line options
------------------------------------------------------------------------------
-'''
+    description = __doc__
 
     def __init__(self, parent):
         super().__init__(parent)
